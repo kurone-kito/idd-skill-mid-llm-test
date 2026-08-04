@@ -16,15 +16,25 @@ or home-directory ledger automatically.
 ```sh
 DATA_PATH="$(mktemp -d)/tasks.json"
 python3 -m daymark --data "$DATA_PATH" add "Write tests" \
-  --due-date 2026-08-05 --tag work
+  --due-date 2026-08-05 --tag work --repeat daily
 python3 -m daymark --data "$DATA_PATH" list --status pending
+python3 -m daymark --data "$DATA_PATH" list \
+  --reference-date 2026-08-05 --due-by 2026-08-05 --tag work
 python3 -m daymark --data "$DATA_PATH" done TASK_ID
 python3 -m daymark --data "$DATA_PATH" restore TASK_ID
 ```
 
 `list` emits deterministic tab-separated rows, with `tags` represented as a
-JSON array. Replace `TASK_ID` with the ID printed by `add`; query and
-recurring-task options are planned for the next roadmap issue.
+JSON array and `repeat` represented as `-`, `daily`, or `weekly`. Replace
+`TASK_ID` with the ID printed by `add`.
+
+Query filters are combined with AND semantics and retain ID ordering. `--due-on`
+is an inclusive exact-date filter; `--due-by` is an inclusive upper bound;
+`--overdue` selects pending tasks strictly before `--reference-date`; and
+`--tag-mode all|any` controls repeated `--tag` matching. `--repeat` filters
+validated metadata and never expands future occurrences or changes due dates.
+The CLI uses the local current date when `--reference-date` is omitted; tests
+and library callers should pass an explicit reference date.
 
 Ledger writes use a same-directory temporary file, flush and fsync it, then
 atomically replace the requested data path. Temporary files are cleaned up

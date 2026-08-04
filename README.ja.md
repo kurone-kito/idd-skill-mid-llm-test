@@ -17,15 +17,26 @@ Daymark は、`kurone-kito/idd-skill-mid-llm-test` で Tier A の IDD
 ```sh
 DATA_PATH="$(mktemp -d)/tasks.json"
 python3 -m daymark --data "$DATA_PATH" add "Write tests" \
-  --due-date 2026-08-05 --tag work
+  --due-date 2026-08-05 --tag work --repeat daily
 python3 -m daymark --data "$DATA_PATH" list --status pending
+python3 -m daymark --data "$DATA_PATH" list \
+  --reference-date 2026-08-05 --due-by 2026-08-05 --tag work
 python3 -m daymark --data "$DATA_PATH" done TASK_ID
 python3 -m daymark --data "$DATA_PATH" restore TASK_ID
 ```
 
 `list` は決定的なタブ区切りの行を出力し、`tags` 列は JSON 配列で
-表現します。`TASK_ID` は `add` が出力する ID に置き換えてください。
-検索と繰り返しタスクのオプションは、次の roadmap issue で扱う予定です。
+表現し、`repeat` 列は `-`、`daily`、`weekly` のいずれかになります。
+`TASK_ID` は `add` が出力する ID に置き換えてください。
+
+検索フィルターを複数指定した場合は AND 条件で結合され、ID 順の決定性
+を保ちます。`--due-on` は指定日のタスク、`--due-by` は指定日以前の
+タスク、`--overdue` は `--reference-date` より前に期限がある pending
+タスクを選びます。複数の `--tag` は `--tag-mode all|any` で全一致または
+いずれか一致を選べます。`--repeat` は検証済みの metadata を絞り込む
+だけで、将来の occurrence を展開したり期限日を変更したりしません。
+`--reference-date` を省略した場合の CLI はローカルの現在日を使いますが、
+テストとライブラリ利用者は明示的な基準日を渡してください。
 
 台帳の書き込みでは同じディレクトリに一時ファイルを作成し、flush と
 fsync を行ってから指定されたデータパスをアトミックに置き換えます。

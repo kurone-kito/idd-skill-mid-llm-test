@@ -87,18 +87,110 @@ class CliTests(unittest.TestCase):
     listed = self.run_cli("list")
     self.assertEqual(listed.returncode, 0, listed.stderr)
     rows = listed.stdout.splitlines()
-    self.assertEqual(rows[0], "id\tstatus\tdue_date\ttags\ttitle")
+    self.assertEqual(rows[0], "id\tstatus\tdue_date\ttags\ttitle\trepeat")
     data_rows = rows[1:]
     self.assertEqual(
       [row.split("\t", 1)[0] for row in data_rows],
       sorted(row.split("\t", 1)[0] for row in data_rows),
     )
-    alpha_row = next(row for row in data_rows if row.endswith('"Alpha"'))
-    zulu_row = next(row for row in data_rows if row.endswith('"Zulu"'))
-    comma_row = next(row for row in data_rows if row.endswith('"Comma tag"'))
+    alpha_row = next(row for row in data_rows if '"Alpha"' in row)
+    zulu_row = next(row for row in data_rows if '"Zulu"' in row)
+    comma_row = next(row for row in data_rows if '"Comma tag"' in row)
     self.assertIn('"-"\t["one"]', alpha_row)
     self.assertIn('"-"\t[]', zulu_row)
     self.assertIn('\t["-","a,b"]\t"Comma tag"', comma_row)
+
+  def test_add_and_list_support_bounded_recurrence(self) -> None:
+    daily = self.run_cli(
+      "add",
+      "Daily review",
+      "--due-date",
+      "2026-08-04",
+      "--tag",
+      "Work",
+      "--repeat",
+      "daily",
+    )
+    weekly = self.run_cli(
+      "add",
+      "Weekly planning",
+      "--due-date",
+      "2026-08-06",
+      "--tag",
+      "work",
+      "--repeat",
+      "weekly",
+    )
+    self.assertEqual(daily.returncode, 0, daily.stderr)
+    self.assertEqual(weekly.returncode, 0, weekly.stderr)
+
+    listed = self.run_cli(
+      "list",
+      "--reference-date",
+      "2026-08-05",
+      "--overdue",
+      "--tag",
+      "work",
+      "--repeat",
+      "daily",
+    )
+    self.assertEqual(listed.returncode, 0, listed.stderr)
+    self.assertIn('"Daily review"\t"daily"', listed.stdout)
+    self.assertNotIn("Weekly planning", listed.stdout)
+
+  def test_combined_date_and_tag_query_is_an_intersection(self) -> None:
+    first = self.run_cli(
+      "add",
+      "Work on due date",
+      "--due-date",
+      "2026-08-05",
+      "--tag",
+      "work",
+      "--tag",
+      "focus",
+    )
+    second = self.run_cli(
+      "add",
+      "Home on due date",
+      "--due-date",
+      "2026-08-05",
+      "--tag",
+      "home",
+    )
+    self.assertEqual(first.returncode, 0, first.stderr)
+    self.assertEqual(second.returncode, 0, second.stderr)
+
+    listed = self.run_cli(
+      "list",
+      "--reference-date",
+      "2026-08-05",
+      "--due-on",
+      "2026-08-05",
+      "--tag",
+      "work",
+      "--tag",
+      "focus",
+      "--tag-mode",
+      "all",
+    )
+    self.assertEqual(listed.returncode, 0, listed.stderr)
+    self.assertIn("Work on due date", listed.stdout)
+    self.assertNotIn("Home on due date", listed.stdout)
+
+  def test_unsupported_recurrence_input_is_a_clean_error(self) -> None:
+    for command in (
+      ("add", "Task", "--repeat", "monthly"),
+      ("list", "--repeat", "monthly"),
+    ):
+      with self.subTest(command=command):
+        result = self.run_cli(*command)
+        self.assert_clean_error(result)
+    self.assertFalse(self.data_path.exists())
+
+  def test_empty_reference_date_is_a_clean_error(self) -> None:
+    result = self.run_cli("list", "--reference-date", "")
+    self.assert_clean_error(result)
+    self.assertFalse(self.data_path.exists())
 
   def test_invalid_fields_and_ids_are_clean_errors(self) -> None:
     for arguments in (
@@ -228,7 +320,7 @@ class CliTests(unittest.TestCase):
     stderr = process.stderr.read()
     process.stderr.close()
     returncode = process.wait()
-    self.assertEqual(header, "id\tstatus\tdue_date\ttags\ttitle\n")
+    self.assertEqual(header, "id\tstatus\tdue_date\ttags\ttitle\trepeat\n")
     self.assertEqual(returncode, 0, stderr)
     self.assertNotIn("Traceback", stderr)
 
