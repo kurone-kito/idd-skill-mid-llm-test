@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
-import re
 import subprocess
 import sys
 import tempfile
@@ -50,8 +50,6 @@ class CliTests(unittest.TestCase):
       "Work",
       "--tag",
       "work",
-      "--repeat",
-      "weekly",
     )
     self.assertEqual(added.returncode, 0, added.stderr)
     task_id = added.stdout.strip().split(" ", 1)[1]
@@ -63,7 +61,7 @@ class CliTests(unittest.TestCase):
     self.assertEqual(first_list.returncode, 0, first_list.stderr)
     self.assertEqual(first_list.stdout, second_list.stdout)
     self.assertIn(
-      f'"{task_id}"\t"pending"\t"2026-08-05"\t"work"\t"Write tests"',
+      f'"{task_id}"\t"pending"\t"2026-08-05"\t["work"]\t"Write tests"',
       first_list.stdout,
     )
 
@@ -82,6 +80,8 @@ class CliTests(unittest.TestCase):
     second = self.run_cli("add", "Alpha", "--tag", "one")
     self.assertEqual(first.returncode, 0, first.stderr)
     self.assertEqual(second.returncode, 0, second.stderr)
+    comma_tag = self.run_cli("add", "Comma tag", "--tag", "a,b", "--tag", "-")
+    self.assertEqual(comma_tag.returncode, 0, comma_tag.stderr)
 
     listed = self.run_cli("list")
     self.assertEqual(listed.returncode, 0, listed.stderr)
@@ -94,8 +94,10 @@ class CliTests(unittest.TestCase):
     )
     alpha_row = next(row for row in data_rows if row.endswith('"Alpha"'))
     zulu_row = next(row for row in data_rows if row.endswith('"Zulu"'))
-    self.assertIn('"-"\t"one"', alpha_row)
-    self.assertIn('"-"\t"-"', zulu_row)
+    comma_row = next(row for row in data_rows if row.endswith('"Comma tag"'))
+    self.assertIn('"-"\t["one"]', alpha_row)
+    self.assertIn('"-"\t[]', zulu_row)
+    self.assertIn('\t["-","a,b"]\t"Comma tag"', comma_row)
 
   def test_invalid_fields_and_ids_are_clean_errors(self) -> None:
     for arguments in (
@@ -121,6 +123,26 @@ class CliTests(unittest.TestCase):
     )
     self.assert_clean_error(result)
     self.assertFalse((ROOT / "tasks.json").exists())
+
+  def test_list_reports_clean_error_on_unrepresentable_stdout(self) -> None:
+    added = self.run_cli("add", "日本語のタスク")
+    self.assertEqual(added.returncode, 0, added.stderr)
+    result = subprocess.run(
+      [
+        sys.executable,
+        "-m",
+        "daymark",
+        "--data",
+        str(self.data_path),
+        "list",
+      ],
+      cwd=ROOT,
+      capture_output=True,
+      text=True,
+      env={**os.environ, "PYTHONIOENCODING": "ascii"},
+      check=False,
+    )
+    self.assert_clean_error(result)
 
 
 if __name__ == "__main__":

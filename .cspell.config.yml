@@ -35,6 +35,7 @@ words:
   - Esync
   - isort
   - ONNX
+  - PYTHONIOENCODING
   - pylint
   - pyproject
   - pytest

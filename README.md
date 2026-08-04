@@ -4,7 +4,7 @@ Daymark is a small offline task-planning CLI used to evaluate the Tier A
 IDD workflow in `kurone-kito/idd-skill-mid-llm-test`.
 
 The application keeps a local task ledger with generated IDs, due-date
-queries, completion transitions, and safe JSON persistence. It uses only
+metadata, completion transitions, and safe JSON persistence. It uses only
 the Python standard library so the experiment can isolate
 workflow and model behavior from dependency installation.
 
@@ -22,13 +22,13 @@ python3 -m daymark --data "$DATA_PATH" done TASK_ID
 python3 -m daymark --data "$DATA_PATH" restore TASK_ID
 ```
 
-`list` emits deterministic tab-separated rows. Replace `TASK_ID` with the
-ID printed by `add`; query and recurring-task options are planned for the
-next roadmap issue.
+`list` emits deterministic tab-separated rows, with `tags` represented as a
+JSON array. Replace `TASK_ID` with the ID printed by `add`; query and
+recurring-task options are planned for the next roadmap issue.
 
-Ledger writes use a same-directory temporary file, flush it, and atomically
-replace the requested data path. Temporary files are cleaned up after both
-successful and failed writes.
+Ledger writes use a same-directory temporary file, flush and fsync it, then
+atomically replace the requested data path. Temporary files are cleaned up
+after both successful and failed writes.
 
 ## Development
 

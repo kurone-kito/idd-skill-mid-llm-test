@@ -29,7 +29,6 @@ def _build_parser() -> argparse.ArgumentParser:
   add.add_argument("title")
   add.add_argument("--due-date")
   add.add_argument("--tag", action="append", default=[])
-  add.add_argument("--repeat", choices=("daily", "weekly"))
 
   list_tasks = commands.add_parser("list", help="list tasks")
   list_tasks.add_argument(
@@ -50,13 +49,13 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _render_task(task: Task) -> str:
   fields = (
-    task.id,
-    task.status,
-    task.due_date or "-",
-    ",".join(task.tags) or "-",
-    task.title,
+    json.dumps(task.id, ensure_ascii=False),
+    json.dumps(task.status, ensure_ascii=False),
+    json.dumps(task.due_date or "-", ensure_ascii=False),
+    json.dumps(list(task.tags), ensure_ascii=False, separators=(",", ":")),
+    json.dumps(task.title, ensure_ascii=False),
   )
-  return "\t".join(json.dumps(field, ensure_ascii=False) for field in fields)
+  return "\t".join(fields)
 
 
 def _run_add(args: argparse.Namespace, ledger: Ledger) -> None:
@@ -64,7 +63,6 @@ def _run_add(args: argparse.Namespace, ledger: Ledger) -> None:
     args.title,
     due_date=args.due_date,
     tags=args.tag,
-    repeat=args.repeat,
   )
   print(f"created {task.id}")
 
@@ -103,7 +101,7 @@ def main(argv: Sequence[str] | None = None) -> int:
       _run_list(args, ledger)
     else:
       _run_transition(args, ledger)
-  except (LedgerError, TaskValidationError) as error:
+  except (LedgerError, TaskValidationError, UnicodeEncodeError) as error:
     print(f"error: {error}", file=sys.stderr)
     return 2
   return 0
