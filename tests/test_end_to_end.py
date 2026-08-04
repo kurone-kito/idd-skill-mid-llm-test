@@ -99,6 +99,7 @@ class EndToEndTests(unittest.TestCase):
     first_list = self.run_cli(self.data_path, "list")
     second_list = self.run_cli(self.data_path, "list")
     self.assert_success(first_list)
+    self.assert_success(second_list)
     self.assertEqual(first_list.stdout, second_list.stdout)
     rows = first_list.stdout.splitlines()
     self.assertEqual(rows[0], "id\tstatus\tdue_date\ttags\ttitle\trepeat")
