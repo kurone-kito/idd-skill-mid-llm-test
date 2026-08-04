@@ -154,9 +154,9 @@ class EndToEndTests(unittest.TestCase):
     self.assert_success(first_list)
     self.assert_success(second_list)
     self.assertEqual(first_list.stdout, second_list.stdout)
-    listed_ids = self.listed_ids(first_list)
+    all_listed_ids = self.listed_ids(first_list)
     self.assertEqual(
-      listed_ids,
+      all_listed_ids,
       sorted(
         (
           overdue_id,
