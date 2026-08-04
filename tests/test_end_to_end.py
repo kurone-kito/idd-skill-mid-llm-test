@@ -88,6 +88,17 @@ class EndToEndTests(unittest.TestCase):
       "--repeat",
       "weekly",
     )
+    future_focus_id = self.add_task(
+      "Future focus",
+      "--due-date",
+      "2026-08-06",
+      "--tag",
+      "work",
+      "--tag",
+      "focus",
+      "--repeat",
+      "daily",
+    )
     due_today_id = self.add_task(
       "Review docs",
       "--due-date",
@@ -104,10 +115,9 @@ class EndToEndTests(unittest.TestCase):
     rows = first_list.stdout.splitlines()
     self.assertEqual(rows[0], "id\tstatus\tdue_date\ttags\ttitle\trepeat")
     listed_ids = [json.loads(row.split("\t", 1)[0]) for row in rows[1:]]
-    self.assertEqual(listed_ids, sorted(listed_ids))
     self.assertEqual(
-      set(listed_ids),
-      {overdue_id, future_id, due_today_id},
+      listed_ids,
+      sorted((overdue_id, future_id, future_focus_id, due_today_id)),
     )
 
     overdue = self.run_cli(
@@ -129,6 +139,7 @@ class EndToEndTests(unittest.TestCase):
     self.assertIn(overdue_id, overdue.stdout)
     self.assertIn("Prepare report", overdue.stdout)
     self.assertNotIn("Plan meeting", overdue.stdout)
+    self.assertNotIn("Future focus", overdue.stdout)
     self.assertNotIn("Review docs", overdue.stdout)
 
     due_today = self.run_cli(
@@ -179,8 +190,13 @@ class EndToEndTests(unittest.TestCase):
 
     self.malformed_path.parent.mkdir(parents=True)
     self.malformed_path.write_text("{", encoding="utf-8")
+    malformed_before_failure = self.malformed_path.read_bytes()
     malformed = self.run_cli(self.malformed_path, "list")
     self.assert_clean_error(malformed, "ledger contains malformed JSON")
+    self.assertEqual(
+      self.malformed_path.read_bytes(),
+      malformed_before_failure,
+    )
     self.assertEqual(self.data_path.read_bytes(), persisted_before_failure)
 
     valid_after_failure = self.run_cli(self.data_path, "list")
