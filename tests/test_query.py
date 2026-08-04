@@ -125,6 +125,7 @@ class QueryTests(unittest.TestCase):
       ({"reference_date": REFERENCE_DATE, "due_on": "2026-8-5"}, "due_on"),
       ({"reference_date": REFERENCE_DATE, "due_on": "20260805"}, "due_on"),
       ({"reference_date": REFERENCE_DATE, "tag_mode": "missing"}, "tag_mode"),
+      ({"reference_date": REFERENCE_DATE, "overdue": "false"}, "overdue"),
       ({"reference_date": REFERENCE_DATE, "repeat": "monthly"}, "repeat"),
       ({"reference_date": REFERENCE_DATE, "status": "missing"}, "status"),
     ):

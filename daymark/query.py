@@ -72,6 +72,8 @@ def query_tasks(
   )
   if tag_mode not in _VALID_TAG_MODES:
     raise TaskValidationError("tag_mode must be all or any")
+  if type(overdue) is not bool:
+    raise TaskValidationError("overdue must be a boolean")
   requested_tags = normalize_tags(tags)
   requested_tag_set = set(requested_tags)
   requested_repeat = _validate_repeat(repeat)
