@@ -70,7 +70,7 @@ def query_tasks(
   upper_due = (
     _parse_date(due_by, "due_by") if due_by is not None else None
   )
-  if tag_mode not in _VALID_TAG_MODES:
+  if not isinstance(tag_mode, str) or tag_mode not in _VALID_TAG_MODES:
     raise TaskValidationError("tag_mode must be all or any")
   if type(overdue) is not bool:
     raise TaskValidationError("overdue must be a boolean")
