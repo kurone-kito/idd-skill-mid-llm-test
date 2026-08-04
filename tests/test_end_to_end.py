@@ -57,6 +57,14 @@ class EndToEndTests(unittest.TestCase):
     self.assertIn(message, result.stderr)
     self.assertNotIn("Traceback", result.stderr)
 
+  def listed_ids(
+    self,
+    result: subprocess.CompletedProcess[str],
+  ) -> list[str]:
+    rows = result.stdout.splitlines()
+    self.assertEqual(rows[0], "id\tstatus\tdue_date\ttags\ttitle\trepeat")
+    return [json.loads(row.split("\t", 1)[0]) for row in rows[1:]]
+
   def add_task(self, title: str, *arguments: str) -> str:
     result = self.run_cli(self.data_path, "add", title, *arguments)
     self.assert_success(result)
@@ -106,18 +114,61 @@ class EndToEndTests(unittest.TestCase):
       "--tag",
       "docs",
     )
+    same_day_work_id = self.add_task(
+      "Same day work",
+      "--due-date",
+      "2026-08-05",
+      "--tag",
+      "work",
+    )
+    future_docs_id = self.add_task(
+      "Future docs",
+      "--due-date",
+      "2026-08-06",
+      "--tag",
+      "docs",
+    )
+    overdue_work_only_id = self.add_task(
+      "Overdue work only",
+      "--due-date",
+      "2026-08-04",
+      "--tag",
+      "work",
+      "--repeat",
+      "daily",
+    )
+    overdue_weekly_id = self.add_task(
+      "Overdue weekly focus",
+      "--due-date",
+      "2026-08-04",
+      "--tag",
+      "work",
+      "--tag",
+      "focus",
+      "--repeat",
+      "weekly",
+    )
 
     first_list = self.run_cli(self.data_path, "list")
     second_list = self.run_cli(self.data_path, "list")
     self.assert_success(first_list)
     self.assert_success(second_list)
     self.assertEqual(first_list.stdout, second_list.stdout)
-    rows = first_list.stdout.splitlines()
-    self.assertEqual(rows[0], "id\tstatus\tdue_date\ttags\ttitle\trepeat")
-    listed_ids = [json.loads(row.split("\t", 1)[0]) for row in rows[1:]]
+    all_listed_ids = self.listed_ids(first_list)
     self.assertEqual(
-      listed_ids,
-      sorted((overdue_id, future_id, future_focus_id, due_today_id)),
+      all_listed_ids,
+      sorted(
+        (
+          overdue_id,
+          future_id,
+          future_focus_id,
+          due_today_id,
+          same_day_work_id,
+          future_docs_id,
+          overdue_work_only_id,
+          overdue_weekly_id,
+        ),
+      ),
     )
 
     overdue = self.run_cli(
@@ -136,11 +187,7 @@ class EndToEndTests(unittest.TestCase):
       "daily",
     )
     self.assert_success(overdue)
-    self.assertIn(overdue_id, overdue.stdout)
-    self.assertIn("Prepare report", overdue.stdout)
-    self.assertNotIn("Plan meeting", overdue.stdout)
-    self.assertNotIn("Future focus", overdue.stdout)
-    self.assertNotIn("Review docs", overdue.stdout)
+    self.assertEqual(self.listed_ids(overdue), [overdue_id])
 
     due_today = self.run_cli(
       self.data_path,
@@ -153,8 +200,7 @@ class EndToEndTests(unittest.TestCase):
       "docs",
     )
     self.assert_success(due_today)
-    self.assertIn(due_today_id, due_today.stdout)
-    self.assertNotIn("Prepare report", due_today.stdout)
+    self.assertEqual(self.listed_ids(due_today), [due_today_id])
 
     completed = self.run_cli(self.data_path, "done", overdue_id)
     self.assert_success(completed)
@@ -165,8 +211,7 @@ class EndToEndTests(unittest.TestCase):
       "completed",
     )
     self.assert_success(completed_list)
-    self.assertIn(overdue_id, completed_list.stdout)
-    self.assertIn('"completed"', completed_list.stdout)
+    self.assertEqual(self.listed_ids(completed_list), [overdue_id])
 
     restored = self.run_cli(self.data_path, "restore", overdue_id)
     self.assert_success(restored)
@@ -177,8 +222,21 @@ class EndToEndTests(unittest.TestCase):
       "pending",
     )
     self.assert_success(pending_list)
-    self.assertIn(overdue_id, pending_list.stdout)
-    self.assertIn('"pending"', pending_list.stdout)
+    self.assertEqual(
+      self.listed_ids(pending_list),
+      sorted(
+        (
+          overdue_id,
+          future_id,
+          future_focus_id,
+          due_today_id,
+          same_day_work_id,
+          future_docs_id,
+          overdue_work_only_id,
+          overdue_weekly_id,
+        ),
+      ),
+    )
 
     persisted_before_failure = self.data_path.read_bytes()
     persisted_document = json.loads(persisted_before_failure)
@@ -201,7 +259,7 @@ class EndToEndTests(unittest.TestCase):
 
     valid_after_failure = self.run_cli(self.data_path, "list")
     self.assert_success(valid_after_failure)
-    self.assertIn("Prepare report", valid_after_failure.stdout)
+    self.assertIn(overdue_id, valid_after_failure.stdout)
 
 
 if __name__ == "__main__":
