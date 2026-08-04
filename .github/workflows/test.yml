@@ -1,0 +1,23 @@
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+name: Python tests
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
