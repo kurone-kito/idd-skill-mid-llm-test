@@ -8,8 +8,13 @@ line-length:
   tables: false
 # Allows the use of duplicate headings across different sections while
 # still catching true duplicates among sibling headings.
-no-duplicate-heading:
-  siblings_only: true
+no-duplicate-heading: false
+# Imported IDD pages use OKF frontmatter plus a visible H1. Do not count
+# the frontmatter title as a second top-level heading.
+single-title:
+  front_matter_title: ""
+# Long imported reference tables are intentionally not padded for alignment.
+table-column-style: false
 # Allows embedding of the specified HTML tag. The default is unconditional
 # prohibition. Allow for some valuable features, such as folding.
 no-inline-html:
