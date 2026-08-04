@@ -23,6 +23,11 @@ ordinary implementation mistake.
 - **Merge policy**: `fully_autonomous_merge`, selected for this controlled
   user-authorized experiment; the repository currently has no protected
   branch or required check.
+- **Required-check read trust**: `ciGate.trustEmptyProtectionReads: true`
+  is enabled because the authenticated GitHub token has admin permission,
+  classic protection returned 404, and the ruleset list was empty. This
+  explicitly records the verified empty-protection decision required by
+  the fail-closed IDD default.
 - **Thread resolution**: `fast-agent-resolve`.
 - **Issue-author approval**: enabled by default; `kurone-kito` is an admin
   and can self-authorize the issues created for this run.
@@ -52,3 +57,4 @@ ordinary implementation mistake.
 | --- | --- | --- | --- | --- |
 | 0 | bootstrap / PR #1 | held on CI | The imported docs produced 119 cspell findings across 23 repeated words in the target's generic dictionary. A CodeRabbit status also remained pending, while no branch protection or required check was configured. | candidate: imported-doc dictionary contract |
 | 1 | #3 / B1-B3 | implemented locally; CI pending | B1 first created a worktree one directory too high; the empty branch was safely removed and recreated at the required sibling path. The local shell has `python3` but no `python` alias, so validation was made explicit and portable with `python3`. Core tests now cover validation, versioned persistence, duplicate IDs, and preservation after serialization or replace failure. A body-only issue update also reintroduced the `roadmap` label on this child, so the full label set was restored before continuing. | candidate: imported-doc dictionary and generic-linter contract |
+| 2 | #3 / E1-F2 | policy fix committed; CI pending | Copilot and Codex review threads identified actionable input-boundary and indentation defects; the fixes were verified locally and all threads were replied to and resolved. CodeRabbit returned only a rate-limit notice. F2 then stopped on the imported fail-closed 404 protection-read rule, so the verified empty-protection policy was recorded explicitly in target config before merge. | candidate: onboarding should surface the verified empty-protection trust decision |
