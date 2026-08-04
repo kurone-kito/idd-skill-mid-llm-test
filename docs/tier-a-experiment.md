@@ -50,4 +50,4 @@ ordinary implementation mistake.
 
 | Run | Issue/PR | Result | Observation | Upstream feedback |
 | --- | --- | --- | --- | --- |
-| 0 | bootstrap | in progress | Template import and policy wiring are being verified. | pending |
+| 0 | bootstrap / PR #1 | held on CI | The imported docs produced 119 cspell findings across 23 repeated words in the target's generic dictionary. A CodeRabbit status also remained pending, while no branch protection or required check was configured. | candidate: imported-doc dictionary contract |
