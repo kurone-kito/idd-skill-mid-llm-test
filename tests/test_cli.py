@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -143,6 +144,93 @@ class CliTests(unittest.TestCase):
       check=False,
     )
     self.assert_clean_error(result)
+
+  def test_transition_reports_success_when_stdout_cannot_encode_id(self) -> None:
+    self.data_path.parent.mkdir(parents=True)
+    self.data_path.write_text(
+      json.dumps(
+        {
+          "schema_version": 1,
+          "tasks": [
+            {
+              "id": "識別子",
+              "title": "task",
+              "due_date": None,
+              "tags": [],
+              "status": "pending",
+              "repeat": None,
+            }
+          ],
+        },
+        ensure_ascii=False,
+      ),
+      encoding="utf-8",
+    )
+    result = subprocess.run(
+      [
+        sys.executable,
+        "-m",
+        "daymark",
+        "--data",
+        str(self.data_path),
+        "done",
+        "識別子",
+      ],
+      cwd=ROOT,
+      capture_output=True,
+      text=True,
+      env={**os.environ, "PYTHONIOENCODING": "ascii"},
+      check=False,
+    )
+    self.assertEqual(result.returncode, 0, result.stderr)
+    self.assertIn(r"updated \u8b58\u5225\u5b50", result.stdout)
+    self.assertEqual(result.stderr, "")
+
+  def test_list_handles_consumer_closing_pipe(self) -> None:
+    self.data_path.parent.mkdir(parents=True)
+    self.data_path.write_text(
+      json.dumps(
+        {
+          "schema_version": 1,
+          "tasks": [
+            {
+              "id": f"{index:032x}",
+              "title": f"task {index}",
+              "due_date": None,
+              "tags": [],
+              "status": "pending",
+              "repeat": None,
+            }
+            for index in range(2000)
+          ],
+        }
+      ),
+      encoding="utf-8",
+    )
+    process = subprocess.Popen(
+      [
+        sys.executable,
+        "-m",
+        "daymark",
+        "--data",
+        str(self.data_path),
+        "list",
+      ],
+      cwd=ROOT,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      text=True,
+    )
+    assert process.stdout is not None
+    assert process.stderr is not None
+    header = process.stdout.readline()
+    process.stdout.close()
+    stderr = process.stderr.read()
+    process.stderr.close()
+    returncode = process.wait()
+    self.assertEqual(header, "id\tstatus\tdue_date\ttags\ttitle\n")
+    self.assertEqual(returncode, 0, stderr)
+    self.assertNotIn("Traceback", stderr)
 
 
 if __name__ == "__main__":

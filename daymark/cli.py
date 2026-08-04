@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Sequence
@@ -58,6 +59,11 @@ def _render_task(task: Task) -> str:
   return "\t".join(fields)
 
 
+def _safe_stdout_text(value: str) -> str:
+  encoding = sys.stdout.encoding or "utf-8"
+  return value.encode(encoding, errors="backslashreplace").decode(encoding)
+
+
 def _run_add(args: argparse.Namespace, ledger: Ledger) -> None:
   task = ledger.add(
     args.title,
@@ -88,7 +94,7 @@ def _run_transition(args: argparse.Namespace, ledger: Ledger) -> None:
   task = _find_task(ledger, args.task_id)
   updated = task.complete() if args.command == "done" else task.restore()
   ledger.update(updated)
-  print(f"updated {updated.id}")
+  print(f"updated {_safe_stdout_text(updated.id)}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -101,6 +107,10 @@ def main(argv: Sequence[str] | None = None) -> int:
       _run_list(args, ledger)
     else:
       _run_transition(args, ledger)
+    sys.stdout.flush()
+  except BrokenPipeError:
+    sys.stdout = open(os.devnull, "w")
+    return 0
   except (LedgerError, TaskValidationError, UnicodeEncodeError) as error:
     print(f"error: {error}", file=sys.stderr)
     return 2
