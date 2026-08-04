@@ -19,7 +19,7 @@ IDD の各フェーズを開始する前に
 テストは次のコマンドで実行します。
 
 ```sh
-python -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -v
 ```
 
 ## 状態

@@ -17,7 +17,7 @@ phase. The experiment policy and loop log live in
 Run the test suite with:
 
 ```sh
-python -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -v
 ```
 
 ## Status

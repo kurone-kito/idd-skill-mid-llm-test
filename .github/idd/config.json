@@ -15,9 +15,9 @@
   },
   "commands": {
     "install-deps": "true",
-    "fix-validate": "true",
-    "pre-push-validate": "true",
-    "post-fix-validate": "true"
+    "fix-validate": "python3 -m unittest discover -s tests -v",
+    "pre-push-validate": "python3 -m unittest discover -s tests -v",
+    "post-fix-validate": "python3 -m unittest discover -s tests -v"
   },
   "helperRuntime": {
     "profile": "instructions-only"
