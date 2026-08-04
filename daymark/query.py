@@ -73,6 +73,7 @@ def query_tasks(
   if tag_mode not in _VALID_TAG_MODES:
     raise TaskValidationError("tag_mode must be all or any")
   requested_tags = normalize_tags(tags)
+  requested_tag_set = set(requested_tags)
   requested_repeat = _validate_repeat(repeat)
   requested_status = _validate_status(status)
 
@@ -89,12 +90,11 @@ def query_tasks(
       task.status != "pending" or task_due is None or task_due >= reference
     ):
       continue
-    if requested_tags:
+    if requested_tag_set:
       task_tags = set(task.tags)
-      requested = set(requested_tags)
-      if tag_mode == "all" and not requested <= task_tags:
+      if tag_mode == "all" and not requested_tag_set <= task_tags:
         continue
-      if tag_mode == "any" and not requested & task_tags:
+      if tag_mode == "any" and not requested_tag_set & task_tags:
         continue
     if requested_repeat is not None and task.repeat != requested_repeat:
       continue

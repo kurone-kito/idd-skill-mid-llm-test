@@ -92,7 +92,11 @@ def _run_add(args: argparse.Namespace, ledger: Ledger) -> None:
 def _run_list(args: argparse.Namespace, ledger: Ledger) -> None:
   tasks = query_tasks(
     ledger.load(),
-    reference_date=args.reference_date or date.today().isoformat(),
+    reference_date=(
+      args.reference_date
+      if args.reference_date is not None
+      else date.today().isoformat()
+    ),
     due_on=args.due_on,
     due_by=args.due_by,
     overdue=args.overdue,

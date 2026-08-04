@@ -187,6 +187,11 @@ class CliTests(unittest.TestCase):
         self.assert_clean_error(result)
     self.assertFalse(self.data_path.exists())
 
+  def test_empty_reference_date_is_a_clean_error(self) -> None:
+    result = self.run_cli("list", "--reference-date", "")
+    self.assert_clean_error(result)
+    self.assertFalse(self.data_path.exists())
+
   def test_invalid_fields_and_ids_are_clean_errors(self) -> None:
     for arguments in (
       ("add", "Task", "--due-date", "2026-02-30"),
