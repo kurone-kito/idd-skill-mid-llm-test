@@ -40,6 +40,10 @@ Ledger writes use a same-directory temporary file, flush and fsync it, then
 atomically replace the requested data path. Temporary files are cleaned up
 after both successful and failed writes.
 
+Malformed or unsupported ledgers fail with a stable `error:` message and a
+non-zero exit status. Daymark does not silently choose another data path or
+rewrite a ledger after a failed read.
+
 ## Development
 
 Read [docs/idd-workflow.md](docs/idd-workflow.md) before starting an IDD
