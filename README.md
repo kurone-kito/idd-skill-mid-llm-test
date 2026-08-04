@@ -1,59 +1,31 @@
-# 📄 Generic repository template
+# Daymark
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Linting](https://github.com/kurone-kito/template/actions/workflows/lint.yml/badge.svg)](https://github.com/kurone-kito/template/actions/workflows/lint.yml)
-[![CodeRabbit](https://img.shields.io/badge/review-CodeRabbit-green?logo=coderabbit)](https://www.coderabbit.ai/)
+Daymark is a small offline task-planning CLI used to evaluate the Tier A
+IDD workflow in `kurone-kito/idd-skill-mid-llm-test`.
 
-A language-agnostic project template designed as the root of a hierarchy
-of derived templates.
+The application will keep a local task ledger with deterministic IDs,
+due-date queries, completion transitions, and safe JSON persistence. It
+uses only the Python standard library so the experiment can isolate
+workflow and model behavior from dependency installation.
 
-## Features
+## Development
 
-- AI agent guidance with a Copilot-first compatibility layout
-  ([GitHub Copilot canonical guide](.github/copilot-instructions.md),
-  [OpenAI Codex adapter](AGENTS.md),
-  [Claude Code adapter](CLAUDE.md),
-  [Gemini CLI adapter](GEMINI.md),
-  [strategy notes](docs/ai-strategy.md))
-- CI/CD
-  - [CodeRabbit](https://www.coderabbit.ai/)
-  - [ImgBot](https://imgbot.net/)
-  - Linting on GitHub Actions
-  - Stale issues and pull requests management on GitHub Actions
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- Documents for GitHub
-- Git attributes
-- Linters
-  - [CSpell](https://cspell.org/)
-  - [EditorConfig](https://editorconfig.org/)
-  - [MarkdownLint](https://github.com/DavidAnson/markdownlint)
+Read [docs/idd-workflow.md](docs/idd-workflow.md) before starting an IDD
+phase. The experiment policy and loop log live in
+[docs/tier-a-experiment.md](docs/tier-a-experiment.md).
 
-### Recommended NeoVim / Vim plugins
+Run the test suite with:
 
-- [editorconfig-vim](https://github.com/editorconfig/editorconfig-vim) —
-  EditorConfig support
-- [cspell.nvim](https://github.com/davidmh/cspell.nvim) — CSpell
-  integration for NeoVim (via null-ls / none-ls)
+```sh
+python -m unittest discover -s tests -v
+```
 
-## Using this template
+## Status
 
-1. Click "Use this template" on GitHub to create your repository.
-2. Replace the LICENSE file if you prefer a different license.
-3. Review workflows under `.github/workflows` and adjust them to your needs.
-4. Customize the configuration files:
-   - `.editorconfig` sets editor rules.
-   - `.gitattributes` manages line ending normalization and export rules.
-   - `.imgbotconfig` controls image optimization.
-   - `.markdownlint.yml` and `.markdownlint-cli2.yaml` define Markdown
-     lint rules.
-   - `.cspell.config.yml` configures spell checking.
-   - `.coderabbit.yaml` contains CodeRabbit settings.
-   - `.vscode/` provides recommended settings for VS Code.
-5. Update documents in `.github/` such as CONTRIBUTING.md to match your
-   policies.
-6. Review `docs/ai-strategy.md`, then update `AGENTS.md`,
-   `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` to
-   reflect your project specifics and preferred tooling order.
+The repository is intentionally developed through GitHub Issues. The
+initial roadmap and its child issues define the first runnable slice;
+later observations may produce follow-up issues in the upstream
+`idd-skill` repository.
 
 ## License
 
