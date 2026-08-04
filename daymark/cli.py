@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import sys
 from typing import Sequence
 
 from .model import Task, TaskValidationError
+from .query import query_tasks
 from .store import Ledger, LedgerError
 
 
@@ -30,6 +32,7 @@ def _build_parser() -> argparse.ArgumentParser:
   add.add_argument("title")
   add.add_argument("--due-date")
   add.add_argument("--tag", action="append", default=[])
+  add.add_argument("--repeat", choices=("daily", "weekly"))
 
   list_tasks = commands.add_parser("list", help="list tasks")
   list_tasks.add_argument(
@@ -37,6 +40,17 @@ def _build_parser() -> argparse.ArgumentParser:
     choices=("pending", "completed", "all"),
     default="all",
   )
+  list_tasks.add_argument("--reference-date", default=None)
+  list_tasks.add_argument("--due-on")
+  list_tasks.add_argument("--due-by")
+  list_tasks.add_argument("--overdue", action="store_true")
+  list_tasks.add_argument("--tag", action="append", default=[])
+  list_tasks.add_argument(
+    "--tag-mode",
+    choices=("all", "any"),
+    default="all",
+  )
+  list_tasks.add_argument("--repeat", choices=("daily", "weekly"))
 
   for command, help_text in (
     ("done", "complete a task"),
@@ -55,6 +69,7 @@ def _render_task(task: Task) -> str:
     json.dumps(task.due_date or "-", ensure_ascii=False),
     json.dumps(list(task.tags), ensure_ascii=False, separators=(",", ":")),
     json.dumps(task.title, ensure_ascii=False),
+    json.dumps(task.repeat or "-", ensure_ascii=False),
   )
   return "\t".join(fields)
 
@@ -69,16 +84,24 @@ def _run_add(args: argparse.Namespace, ledger: Ledger) -> None:
     args.title,
     due_date=args.due_date,
     tags=args.tag,
+    repeat=args.repeat,
   )
   print(f"created {task.id}")
 
 
 def _run_list(args: argparse.Namespace, ledger: Ledger) -> None:
-  tasks = ledger.load()
-  if args.status != "all":
-    tasks = [task for task in tasks if task.status == args.status]
-  tasks.sort(key=lambda task: task.id)
-  print("id\tstatus\tdue_date\ttags\ttitle")
+  tasks = query_tasks(
+    ledger.load(),
+    reference_date=args.reference_date or date.today().isoformat(),
+    due_on=args.due_on,
+    due_by=args.due_by,
+    overdue=args.overdue,
+    tags=args.tag,
+    tag_mode=args.tag_mode,
+    repeat=args.repeat,
+    status=None if args.status == "all" else args.status,
+  )
+  print("id\tstatus\tdue_date\ttags\ttitle\trepeat")
   for task in tasks:
     print(_render_task(task))
 
